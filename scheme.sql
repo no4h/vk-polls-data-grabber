@@ -1,0 +1,38 @@
+CREATE TABLE IF NOT EXISTS `key_value_storage` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `key` VARCHAR(32) NOT NULL,
+  `value` BLOB NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `k` (`key`)
+)ENGINE=InnoDB CHARACTER SET `utf8`;
+
+CREATE TABLE IF NOT EXISTS `polls` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `created_at` DATETIME NOT NULL,
+  PRIMARY KEY (`id`)
+)ENGINE=InnoDB CHARACTER SET `utf8`;
+
+CREATE TABLE IF NOT EXISTS `poll_positions` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `poll_id` INT(11) UNSIGNED NOT NULL,
+  `content` TEXT NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `pi` (`poll_id`)
+)ENGINE=InnoDB CHARACTER SET `utf8`;
+
+CREATE TABLE IF NOT EXISTS `voters` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(64) NOT NULL,
+  PRIMARY KEY (`id`)
+)ENGINE=InnoDB CHARACTER SET `utf8`;
+
+CREATE TABLE IF NOT EXISTS `votes` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `poll_position_id` INT(11) UNSIGNED NOT NULL,
+  `voter_id` INT(11) UNSIGNED NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  `country` VARCHAR(2) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ppi` (`poll_position_id`),
+  KEY `vi` (`voter_id`)
+)ENGINE=InnoDB CHARACTER SET `utf8`;
