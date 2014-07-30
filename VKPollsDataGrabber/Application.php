@@ -42,8 +42,7 @@ final class Application
                 'scope' => 'wall',
                 'display' => 'page',
                 'v' => '5.23',
-                'response_type' => 'token',
-                //'redirect_uri' => $_SERVER['HTTP_HOST'] . '/' . 'store_access_token.php'
+                'response_type' => 'token'
             );
 
             $uri = 'https://oauth.vk.com/authorize?' . http_build_query($params);
@@ -72,6 +71,7 @@ final class Application
      */
     public function setAccessToken($accessToken)
     {
+        $this->_getLogger()->write('New access token: ' . $accessToken . ', and old is: ' . $this->getAccessToken());
         $this->_storeValueIntoStorage('access_token', $accessToken);
         return $this;
     }
@@ -84,6 +84,8 @@ final class Application
     public function getPolls()
     {
 
+        $this->_getLogger()->write('Downloading posts');
+
         $apiMethodCall = new VKApiMethodCall($this->getAccessToken());
         $result = $apiMethodCall->call(
             'wall.get',
@@ -93,10 +95,29 @@ final class Application
         return $this->_processPollsRequestResult($result);
     }
 
+    /**
+     * Get poll data
+     *
+     * @param string $pollId
+     * @return mixed|null
+     */
     public function getPollData($pollId)
     {
-        $apiMethodCall = new VKApiMethodCall($this->getAccessToken());
+        $this->_getLogger()->write('Downloading poll data, poll id: ' . $pollId);
 
+        $apiMethodCall = new VKApiMethodCall($this->getAccessToken());
+        $result = $apiMethodCall->call(
+            'polls.getById',
+            array(
+                'poll_id' => $pollId
+            )
+        );
+
+        if ($this->_isErrorOccurred($result)) {
+            return null;
+        }
+
+        return $result;
     }
 
     public function getPollVoters($pollId)
@@ -106,9 +127,11 @@ final class Application
 
     public function run()
     {
+        $this->_getLogger()->write('Hello!');
 
         var_dump($this->getPolls());
 
+        $this->_getLogger()->write('Goodbye.');
     }
 
     /**
@@ -123,8 +146,7 @@ final class Application
             return null;
         }
 
-        if (array_key_exists('error', $result)) {
-            $this->_getLogger()->write("Error occured! Code: {$result['error']['error_code']}, message: {$result['error']['error_msg']}");
+        if ($this->_isErrorOccurred($result)) {
             return null;
         }
 
@@ -132,6 +154,8 @@ final class Application
             $this->_getLogger()->write('Items count is 0');
             return null;
         }
+
+        $this->_getLogger()->write($result['response']['count'] . ' posts downloaded');
 
         $polls = array();
         foreach ($result['response']['items'] as $item) {
@@ -149,7 +173,25 @@ final class Application
 
         }
 
+        $this->_getLogger()->write(count($polls) . ' posts with one or more polls found');
+
         return $polls;
+    }
+
+    /**
+     * Is error occurred
+     *
+     * @param array $result
+     * @return bool
+     */
+    private function _isErrorOccurred(array $result)
+    {
+        if (array_key_exists('error', $result)) {
+            $this->_getLogger()->write("Error occurred! Code: {$result['error']['error_code']}, message: {$result['error']['error_msg']}");
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
